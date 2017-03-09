@@ -47,11 +47,7 @@ rotz = (θ::Number) -> rot_any(θ, 'z')
 # Homogeneous transform generation
 # -----------------------------------------------------------------------------
 
-# For some reason, using the Number parent class here gives an error for Array{Int64, 2}, e.g.:
-# function r2t(rot_mat::Array{Number,2})
-# Need to revisit this and add type restriction.  Likewise for all other functions in this
-# module that accept arrays.
-function r2t(rot_mat)
+function r2t{T <: Number}(rot_mat::Matrix{T})
     if ~(size(rot_mat) in ((2, 2), (3, 3)))
         error("Expected array of size (2, 2) or (3, 3), instead had size $(size(rot_mat)).")
     end
@@ -64,9 +60,7 @@ function r2t(rot_mat)
     end
 end
 
-# TODO Should be:
-# function t2r(trans_mat::Array{Number,2})
-function t2r(trans_mat)
+function t2r{T <: Number}(trans_mat::Matrix{T})
     if ~(size(trans_mat) in ((3, 3), (4, 4)))
         error("Expected array of size (3, 3) or (4, 4), instead had size $(size(rot_mat)).")
     end
@@ -102,9 +96,7 @@ function se2(x::Number, y::Number, θ::Number)
             0 0 1]
 end
 
-# TODO Should be:
-# function se3(trans_mat::Array{Number,2})
-function se3(trans_mat)
+function se3{T <: Number}(trans_mat::Matrix{T})
     if size(trans_mat) != (3, 3)
         error("Expected array of size (3, 3), instead had size $(size(trans_mat)).")
     end
@@ -127,9 +119,7 @@ function rpy2jac(roll::Number, pitch::Number, yaw::Number)
             0 sin(roll) (cos(pitch) * cos(roll))]
 end
 
-# TODO Should be:
-# function tr2rpy(mat::Array{Number,2})
-function tr2rpy(mat)
+function tr2rpy{T <: Number}(mat::Matrix{T})
     if ~(size(mat) in ((3, 3), (4, 4)))
         error("Expected array of size (3, 3) or (4, 4), instead had size $(size(mat)).")
     end
