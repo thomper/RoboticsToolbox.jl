@@ -39,9 +39,9 @@ function rot_any(θ::Number, axis::Char)
     end
 end
 
-rotx = (θ::Number) -> rot_any(θ, 'x')
-roty = (θ::Number) -> rot_any(θ, 'y')
-rotz = (θ::Number) -> rot_any(θ, 'z')
+rotx(θ::Number) = rot_any(θ, 'x')
+roty(θ::Number) = rot_any(θ, 'y')
+rotz(θ::Number) = rot_any(θ, 'z')
 
 
 # Homogeneous transform generation
@@ -68,7 +68,7 @@ function t2r{T <: Number}(trans_mat::Matrix{T})
     return trans_mat[1:end - 1, 1:end - 1]
 end
 
-trot2 = (θ::Number) -> r2t(rot2(θ))
+trot2(θ::Number) = r2t(rot2(θ))
 
 function trot_any(θ::Number, axis::Char)
     rot_func = if axis == 'x'
@@ -83,9 +83,9 @@ function trot_any(θ::Number, axis::Char)
     return r2t(rot_func(θ))
 end
 
-trotx = (θ::Number) -> trot_any(θ, 'x')
-troty = (θ::Number) -> trot_any(θ, 'y')
-trotz = (θ::Number) -> trot_any(θ, 'z')
+trotx(θ::Number) = trot_any(θ, 'x')
+troty(θ::Number) = trot_any(θ, 'y')
+trotz(θ::Number) = trot_any(θ, 'z')
 
 function se2(x::Number, y::Number, θ::Number)
     sin_θ = sin(θ)
@@ -110,8 +110,8 @@ end
 # Conversion between roll/pitch/yaw and rotation matrices/homogeneous transforms
 # ------------------------------------------------------------------------------
 
-rpy2r = (roll::Number, pitch::Number, yaw::Number) -> rotx(roll) * roty(pitch) * rotz(yaw)
-rpy2t = (roll::Number, pitch::Number, yaw::Number) -> r2t(rpy2r(roll, pitch, yaw))
+rpy2r(roll::Number, pitch::Number, yaw::Number) = rotx(roll) * roty(pitch) * rotz(yaw)
+rpy2t(roll::Number, pitch::Number, yaw::Number) = r2t(rpy2r(roll, pitch, yaw))
 
 function rpy2jac(roll::Number, pitch::Number, yaw::Number)
     return [1 0 sin(pitch);
