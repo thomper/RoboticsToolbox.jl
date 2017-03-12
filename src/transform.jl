@@ -48,7 +48,7 @@ rotz(θ::Number) = rot_any(θ, 'z')
 # -----------------------------------------------------------------------------
 
 function r2t{T <: Number}(rot_mat::Matrix{T})
-    if ~(size(rot_mat) in ((2, 2), (3, 3)))
+    if !(size(rot_mat) in ((2, 2), (3, 3)))
         error("Expected array of size (2, 2) or (3, 3), instead had size $(size(rot_mat)).")
     end
 
@@ -61,7 +61,7 @@ function r2t{T <: Number}(rot_mat::Matrix{T})
 end
 
 function t2r{T <: Number}(trans_mat::Matrix{T})
-    if ~(size(trans_mat) in ((3, 3), (4, 4)))
+    if !(size(trans_mat) in ((3, 3), (4, 4)))
         error("Expected array of size (3, 3) or (4, 4), instead had size $(size(rot_mat)).")
     end
 
@@ -120,7 +120,7 @@ function rpy2jac(roll::Number, pitch::Number, yaw::Number)
 end
 
 function tr2rpy{T <: Number}(mat::Matrix{T})
-    if ~(size(mat) in ((3, 3), (4, 4)))
+    if !(size(mat) in ((3, 3), (4, 4)))
         error("Expected array of size (3, 3) or (4, 4), instead had size $(size(mat)).")
     end
 
