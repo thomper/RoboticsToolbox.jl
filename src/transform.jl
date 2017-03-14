@@ -10,7 +10,7 @@ export rpy2r, rpy2t, rpy2jac, tr2rpy
 # Rotation matrix generation
 # -----------------------------------------------------------------------------
 
-function rot2(θ::Number)
+function rot2(θ::Real)
     cos_θ = cos(θ)
     sin_θ = sin(θ)
 
@@ -18,7 +18,7 @@ function rot2(θ::Number)
             sin_θ cos_θ]
 end
 
-function rot_any(θ::Number, axis::Char)
+function rot_any(θ::Real, axis::Char)
     cos_θ = cos(θ)
     sin_θ = sin(θ)
 
@@ -39,15 +39,15 @@ function rot_any(θ::Number, axis::Char)
     end
 end
 
-rotx(θ::Number) = rot_any(θ, 'x')
-roty(θ::Number) = rot_any(θ, 'y')
-rotz(θ::Number) = rot_any(θ, 'z')
+rotx(θ::Real) = rot_any(θ, 'x')
+roty(θ::Real) = rot_any(θ, 'y')
+rotz(θ::Real) = rot_any(θ, 'z')
 
 
 # Homogeneous transform generation
 # -----------------------------------------------------------------------------
 
-function r2t{T <: Number}(rot_mat::Matrix{T})
+function r2t{T <: Real}(rot_mat::Matrix{T})
     if !(size(rot_mat) in ((2, 2), (3, 3)))
         error("Expected array of size (2, 2) or (3, 3), instead had size $(size(rot_mat)).")
     end
@@ -60,7 +60,7 @@ function r2t{T <: Number}(rot_mat::Matrix{T})
     end
 end
 
-function t2r{T <: Number}(trans_mat::Matrix{T})
+function t2r{T <: Real}(trans_mat::Matrix{T})
     if !(size(trans_mat) in ((3, 3), (4, 4)))
         error("Expected array of size (3, 3) or (4, 4), instead had size $(size(rot_mat)).")
     end
@@ -68,9 +68,9 @@ function t2r{T <: Number}(trans_mat::Matrix{T})
     return trans_mat[1:end - 1, 1:end - 1]
 end
 
-trot2(θ::Number) = r2t(rot2(θ))
+trot2(θ::Real) = r2t(rot2(θ))
 
-function trot_any(θ::Number, axis::Char)
+function trot_any(θ::Real, axis::Char)
     rot_func = if axis == 'x'
                    rotx
                elseif axis == 'y'
@@ -83,11 +83,11 @@ function trot_any(θ::Number, axis::Char)
     return r2t(rot_func(θ))
 end
 
-trotx(θ::Number) = trot_any(θ, 'x')
-troty(θ::Number) = trot_any(θ, 'y')
-trotz(θ::Number) = trot_any(θ, 'z')
+trotx(θ::Real) = trot_any(θ, 'x')
+troty(θ::Real) = trot_any(θ, 'y')
+trotz(θ::Real) = trot_any(θ, 'z')
 
-function se2(x::Number, y::Number, θ::Number)
+function se2(x::Real, y::Real, θ::Real)
     sin_θ = sin(θ)
     cos_θ = cos(θ)
 
@@ -96,7 +96,7 @@ function se2(x::Number, y::Number, θ::Number)
             0 0 1]
 end
 
-function se3{T <: Number}(trans_mat::Matrix{T})
+function se3{T <: Real}(trans_mat::Matrix{T})
     if size(trans_mat) != (3, 3)
         error("Expected array of size (3, 3), instead had size $(size(trans_mat)).")
     end
@@ -110,16 +110,16 @@ end
 # Conversion between roll/pitch/yaw and rotation matrices/homogeneous transforms
 # ------------------------------------------------------------------------------
 
-rpy2r(roll::Number, pitch::Number, yaw::Number) = rotx(roll) * roty(pitch) * rotz(yaw)
-rpy2t(roll::Number, pitch::Number, yaw::Number) = r2t(rpy2r(roll, pitch, yaw))
+rpy2r(roll::Real, pitch::Real, yaw::Real) = rotx(roll) * roty(pitch) * rotz(yaw)
+rpy2t(roll::Real, pitch::Real, yaw::Real) = r2t(rpy2r(roll, pitch, yaw))
 
-function rpy2jac(roll::Number, pitch::Number, yaw::Number)
+function rpy2jac(roll::Real, pitch::Real, yaw::Real)
     return [1 0 sin(pitch);
             0 cos(roll) (-cos(pitch) * sin(roll));
             0 sin(roll) (cos(pitch) * cos(roll))]
 end
 
-function tr2rpy{T <: Number}(mat::Matrix{T})
+function tr2rpy{T <: Real}(mat::Matrix{T})
     if !(size(mat) in ((3, 3), (4, 4)))
         error("Expected array of size (3, 3) or (4, 4), instead had size $(size(mat)).")
     end
