@@ -150,7 +150,6 @@ function r2t(rot_mat::Union{RealMatrix,RealMatrix3D})
     end
 
     if !(size(rot_mat) in ((2, 2), (3, 3)))
-        println("ndims yo: $(ndims(rot_mat))")
         error("Expected array of size (2, 2) or (3, 3), instead had size $(size(rot_mat)).")
     end
 
