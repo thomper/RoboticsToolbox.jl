@@ -6,11 +6,39 @@ export se2, se3
 export r2t, t2r
 export rpy2r, rpy2t, rpy2jac, tr2rpy
 
+typealias RealArray{T <: Real} Array{T,1}
+typealias RealMatrix{T <: Real} Matrix{T}
+
+
+function check_argument_units(units::Symbol)
+    if !(units in (:rad, :deg))
+        error("Expected :rad or :deg for units, got $units")
+    end
+end
+
+function check_argument_axis_order(axis_order::Symbol)
+    if !(axis_order in (:xyz, :zyx))
+        error("Expected :xyz or :zyx for axis_order, got $axis_order")
+    end
+end
+
+function convert_angle(θ::Union{Real, RealArray}, units::Symbol)
+    check_argument_units(units)
+
+    if units == :deg
+            θ = deg2rad(θ)
+    end
+
+    return θ
+end
+
 
 # Rotation matrix generation
 # -----------------------------------------------------------------------------
 
-function rot2(θ::Real)
+function rot2(θ::Real, units::Symbol=:rad)
+    θ = convert_angle(θ, units)
+
     cos_θ = cos(θ)
     sin_θ = sin(θ)
 
@@ -18,7 +46,9 @@ function rot2(θ::Real)
             sin_θ cos_θ]
 end
 
-function rot_any(θ::Real, axis::Char)
+function rot_any(θ::Real, axis::Char, units::Symbol=:rad)
+    θ = convert_angle(θ, units)
+
     cos_θ = cos(θ)
     sin_θ = sin(θ)
 
@@ -39,15 +69,15 @@ function rot_any(θ::Real, axis::Char)
     end
 end
 
-rotx(θ::Real) = rot_any(θ, 'x')
-roty(θ::Real) = rot_any(θ, 'y')
-rotz(θ::Real) = rot_any(θ, 'z')
+rotx(θ::Real, units::Symbol=:rad) = rot_any(θ, 'x', units)
+roty(θ::Real, units::Symbol=:rad) = rot_any(θ, 'y', units)
+rotz(θ::Real, units::Symbol=:rad) = rot_any(θ, 'z', units)
 
 
 # Homogeneous transform generation
 # -----------------------------------------------------------------------------
 
-function r2t{T <: Real}(rot_mat::Matrix{T})
+function r2t(rot_mat::RealMatrix)
     if !(size(rot_mat) in ((2, 2), (3, 3)))
         error("Expected array of size (2, 2) or (3, 3), instead had size $(size(rot_mat)).")
     end
@@ -60,7 +90,7 @@ function r2t{T <: Real}(rot_mat::Matrix{T})
     end
 end
 
-function t2r{T <: Real}(trans_mat::Matrix{T})
+function t2r(trans_mat::RealMatrix)
     if !(size(trans_mat) in ((3, 3), (4, 4)))
         error("Expected array of size (3, 3) or (4, 4), instead had size $(size(rot_mat)).")
     end
@@ -70,7 +100,7 @@ end
 
 trot2(θ::Real) = r2t(rot2(θ))
 
-function trot_any(θ::Real, axis::Char)
+function trot_any(θ::Real, axis::Char, units::Symbol=:rad)
     rot_func = if axis == 'x'
                    rotx
                elseif axis == 'y'
@@ -80,14 +110,16 @@ function trot_any(θ::Real, axis::Char)
                else
                    error("Expected one of ('x', 'y', 'z') for axis, got $axis.")
                end
-    return r2t(rot_func(θ))
+    return r2t(rot_func(θ, units))
 end
 
-trotx(θ::Real) = trot_any(θ, 'x')
-troty(θ::Real) = trot_any(θ, 'y')
-trotz(θ::Real) = trot_any(θ, 'z')
+trotx(θ::Real, units::Symbol=:rad) = trot_any(θ, 'x', units)
+troty(θ::Real, units::Symbol=:rad) = trot_any(θ, 'y', units)
+trotz(θ::Real, units::Symbol=:rad) = trot_any(θ, 'z', units)
 
-function se2(x::Real, y::Real, θ::Real)
+function se2(x::Real, y::Real, θ::Real, units::Symbol=:rad)
+    θ = convert_angle(θ, units)
+
     sin_θ = sin(θ)
     cos_θ = cos(θ)
 
@@ -96,7 +128,7 @@ function se2(x::Real, y::Real, θ::Real)
             0 0 1]
 end
 
-function se3{T <: Real}(trans_mat::Matrix{T})
+function se3(trans_mat::RealMatrix)
     if size(trans_mat) != (3, 3)
         error("Expected array of size (3, 3), instead had size $(size(trans_mat)).")
     end
@@ -110,30 +142,61 @@ end
 # Conversion between roll/pitch/yaw and rotation matrices/homogeneous transforms
 # ------------------------------------------------------------------------------
 
-rpy2r(roll::Real, pitch::Real, yaw::Real) = rotx(roll) * roty(pitch) * rotz(yaw)
-rpy2t(roll::Real, pitch::Real, yaw::Real) = r2t(rpy2r(roll, pitch, yaw))
+function rpy2r(roll::Real, pitch::Real, yaw::Real, units::Symbol=:rad, axis_order::Symbol=:xyz)
+    check_argument_axis_order(axis_order)
 
-function rpy2jac(roll::Real, pitch::Real, yaw::Real)
+    if axis_order == :xyz
+        rot_func_a, rot_func_b, rot_func_c = (rotx, roty, rotz)
+    elseif axis_order == :zyx
+        rot_func_a, rot_func_b, rot_func_c = (rotz, roty, rotx)
+    end
+
+    return rot_func_a(roll, units) * rot_func_b(pitch, units) * rot_func_c(yaw, units)
+end
+
+rpy2t(roll::Real, pitch::Real, yaw::Real, units::Symbol=:rad, axis_order::Symbol=:xyz) = r2t(rpy2r(roll, pitch, yaw, units, axis_order))
+
+function rpy2jac(roll::Real, pitch::Real, yaw::Real, units::Symbol=:rad)
+    roll, pitch, yaw = convert_angle([roll, pitch, yaw], units)
+
     return [1 0 sin(pitch);
             0 cos(roll) (-cos(pitch) * sin(roll));
             0 sin(roll) (cos(pitch) * cos(roll))]
 end
 
-function tr2rpy{T <: Real}(mat::Matrix{T})
+function tr2rpy(mat::RealMatrix, units::Symbol=:rad, axis_order::Symbol=:xyz)
     if !(size(mat) in ((3, 3), (4, 4)))
         error("Expected array of size (3, 3) or (4, 4), instead had size $(size(mat)).")
     end
 
-    singularity_present = all([abs(elem) < eps() for elem in [mat[2, 3] mat[3, 3]]])
-    if singularity_present
-        roll = 0
-        pitch = atan2(mat[1, 3], mat[3, 3])
-        yaw = atan2(mat[2, 1], mat[2, 2])
-    else
-        roll = atan2(-mat[2, 3], mat[3, 3])
-        pitch = atan2(mat[1, 3], cos(roll) * mat[3, 3] - sin(roll) * mat[2, 3])
-        yaw = atan2(-mat[1, 2], mat[1, 1])
+    if axis_order == :xyz
+        singularity_present = all([abs(elem) < eps() for elem in [mat[2, 3] mat[3, 3]]])
+        if singularity_present
+            roll = 0
+            pitch = atan2(mat[1, 3], mat[3, 3])
+            yaw = atan2(mat[2, 1], mat[2, 2])
+        else  # no singularity
+            roll = atan2(-mat[2, 3], mat[3, 3])
+            pitch = atan2(mat[1, 3], cos(roll) * mat[3, 3] - sin(roll) * mat[2, 3])
+            yaw = atan2(-mat[1, 2], mat[1, 1])
+        end
+    else  # axis_order == :zyx
+        singularity_present = all([abs(elem) < eps() for elem in [mat[1, 1] mat[2, 1]]])
+        if singularity_present
+            roll = 0
+            pitch = atan2(-mat[3, 1], mat[1, 1])
+            yaw = atan2(-mat[2, 3], mat[2, 2])
+        else  # no singularity
+            roll = atan2(mat[2, 1], mat[1, 1])
+            sine_roll = sin(roll)
+            cos_roll = cos(roll)
+            pitch = atan2(-mat[3, 1], cos_roll * mat[1, 1] + sine_roll * mat[2, 1])
+            yaw = atan2(sine_roll * mat[1, 3] - cos_roll * mat[2, 3],
+                        cos_roll * mat[2, 2] - sine_roll * mat[1, 2])
+        end
     end
+
+    roll, pitch, yaw = convert_angle([roll, pitch, yaw], units)
 
     return roll, pitch, yaw
 end
