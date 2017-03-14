@@ -8,6 +8,7 @@ export rpy2r, rpy2t, rpy2jac, tr2rpy
 
 typealias RealArray{T <: Real} Array{T,1}
 typealias RealMatrix{T <: Real} Matrix{T}
+typealias RealMatrix3D{T <: Real} Array{T,3}
 
 
 function check_argument_units(units::Symbol)
@@ -77,8 +78,13 @@ rotz(θ::Real, units::Symbol=:rad) = rot_any(θ, 'z', units)
 # Homogeneous transform generation
 # -----------------------------------------------------------------------------
 
-function r2t(rot_mat::RealMatrix)
+function r2t(rot_mat::Union{RealMatrix,RealMatrix3D})
+    if ndims(rot_mat) == 3
+        return cat(3, [r2t(rot_mat[:, :, i]) for i in 1:size(rot_mat, 3)]...)
+    end
+
     if !(size(rot_mat) in ((2, 2), (3, 3)))
+        println("ndims yo: $(ndims(rot_mat))")
         error("Expected array of size (2, 2) or (3, 3), instead had size $(size(rot_mat)).")
     end
 
@@ -90,7 +96,11 @@ function r2t(rot_mat::RealMatrix)
     end
 end
 
-function t2r(trans_mat::RealMatrix)
+function t2r(trans_mat::Union{RealMatrix, RealMatrix3D})
+    if ndims(trans_mat) == 3
+        return cat(3, [t2r(trans_mat[:, :, i]) for i in 1:size(trans_mat, 3)]...)
+    end
+
     if !(size(trans_mat) in ((3, 3), (4, 4)))
         error("Expected array of size (3, 3) or (4, 4), instead had size $(size(rot_mat)).")
     end
@@ -164,7 +174,11 @@ function rpy2jac(roll::Real, pitch::Real, yaw::Real, units::Symbol=:rad)
             0 sin(roll) (cos(pitch) * cos(roll))]
 end
 
-function tr2rpy(mat::RealMatrix, units::Symbol=:rad, axis_order::Symbol=:xyz)
+function tr2rpy(mat::Union{RealMatrix, RealMatrix3D}, units::Symbol=:rad, axis_order::Symbol=:xyz)
+    if ndims(mat) == 3
+        return cat(3, [tr2rpy(mat[:, :, i]) for i in 1:size(mat, 3)]...)
+    end
+
     if !(size(mat) in ((3, 3), (4, 4)))
         error("Expected array of size (3, 3) or (4, 4), instead had size $(size(mat)).")
     end
@@ -198,7 +212,7 @@ function tr2rpy(mat::RealMatrix, units::Symbol=:rad, axis_order::Symbol=:xyz)
 
     roll, pitch, yaw = convert_angle([roll, pitch, yaw], units)
 
-    return roll, pitch, yaw
+    return [roll, pitch, yaw]
 end
 
 end # module transform

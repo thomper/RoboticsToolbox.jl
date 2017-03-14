@@ -154,34 +154,78 @@ end
 
 @testset "Conversions" begin
     @testset "r2t" begin
-        @test ≈(r2t([1 2; 3 4]), [1 2 0;
-                                  3 4 0;
-                                  0 0 1],
-                atol=1e-4)
-        @test ≈(r2t([1 2 3;
-                     4 5 6;
-                     7 8 9]),
-                    [1 2 3 0;
-                     4 5 6 0;
-                     7 8 9 0;
-                     0 0 0 1],
+        @testset "Single Matrix" begin
+            @test ≈(r2t([1 2; 3 4]), [1 2 0;
+                                      3 4 0;
+                                      0 0 1],
                     atol=1e-4)
+            @test ≈(r2t([1 2 3;
+                         4 5 6;
+                         7 8 9]),
+                        [1 2 3 0;
+                         4 5 6 0;
+                         7 8 9 0;
+                         0 0 0 1],
+                        atol=1e-4)
+        end
+
+        @testset "Multiple Matrices" begin
+            # 2D rotation matrices
+            rot_mats = repeat([1 2; 3 4], outer=[1, 1, 10])
+            transforms = r2t(rot_mats)
+            @test size(transforms) == (3, 3, 10)
+            @test ≈(transforms[:, :, 2], [1 2 0;
+                                    3 4 0;
+                                    0 0 1],
+                    atol=1e-4)
+
+            # 3D rotation matrices
+            rot_mats = repeat([1 2 3; 4 5 6; 7 8 9], outer=[1, 1, 10])
+            transforms = r2t(rot_mats)
+            @test size(transforms) == (4, 4, 10)
+            @test ≈(transforms[:, :, 5], [1 2 3 0;
+                                    4 5 6 0;
+                                    7 8 9 0;
+                                    0 0 0 1],
+                    atol=1e-4)
+        end
     end
 
     @testset "t2r" begin
-        @test ≈(t2r([1 2 0;
-                     3 4 0;
-                     0 0 1]),
-                [1 2; 3 4],
-                atol=1e-4)
-        @test ≈(t2r([1 2 3 0;
-                     4 5 6 0;
-                     7 8 9 0;
-                     0 0 0 1]),
-                [1 2 3;
-                 4 5 6;
-                 7 8 9],
-                atol=1e-4)
+        @testset "Single Matrix" begin
+            @test ≈(t2r([1 2 0;
+                         3 4 0;
+                         0 0 1]),
+                    [1 2; 3 4],
+                    atol=1e-4)
+            @test ≈(t2r([1 2 3 0;
+                         4 5 6 0;
+                         7 8 9 0;
+                         0 0 0 1]),
+                    [1 2 3;
+                     4 5 6;
+                     7 8 9],
+                    atol=1e-4)
+        end
+
+        @testset "Multiple Matrices" begin
+            # 2D transforms
+            transforms = repeat([1 2 0; 3 4 0; 0 0 1], outer=[1, 1, 10])
+            rot_mats = t2r(transforms)
+            @test size(rot_mats) == (2, 2, 10)
+            @test ≈(rot_mats[:, :, 8], [1 2; 3 4], atol=1e-4)
+
+
+            # 3D transforms
+            transforms = repeat([1 2 3 0;
+                                 4 5 6 0;
+                                 7 8 9 0;
+                                 0 0 0 1],
+                                outer=[1, 1, 10])
+            rot_mats = t2r(transforms)
+            @test size(rot_mats) == (3, 3, 10)
+            @test ≈(rot_mats[:, :, 4], [1 2 3; 4 5 6; 7 8 9], atol=1e-4)
+        end
     end
 
     @testset "Jacobian" begin
