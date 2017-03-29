@@ -14,23 +14,28 @@ typealias RealMatrix3D{T <: Real} Array{T,3}
 """
     check_argument_units(units)
 
-Raise an error if `units` is invalid.
+Assert `units` is valid.
 """
 function check_argument_units(units::Symbol)
-    if !(units in (:rad, :deg))
-        error("Expected :rad or :deg for units, got $units")
-    end
+    @assert (units in (:rad, :deg)) "Expected rad or deg for units, got $units"
 end
 
 """
     check_argument_axis_order(axis_order)
 
-Raise an error if `axis_order` is invalid.
+Assert `axis_order` is valid.
 """
 function check_argument_axis_order(axis_order::Symbol)
-    if !(axis_order in (:xyz, :zyx))
-        error("Expected :xyz or :zyx for axis_order, got $axis_order")
-    end
+    @assert (axis_order in (:xyz, :zyx)) "Expected xyz or zyx for axis_order, got $axis_order"
+end
+
+"""
+    check_argument_axis(axis)
+
+Assert `axis` is valid.
+"""
+function check_argument_axis(axis::Symbol)
+    @assert (axis in (:x, :y, :z)) "Expected x, y, or z for axis, got $axis"
 end
 
 """
@@ -76,26 +81,26 @@ Generate 3 x 3 rotation matrix representing a rotation of `θ` about `axis`.
 
 Interpret `θ` in radians unless `units` is `:deg`.
 """
-function rot_any(θ::Real, axis::Char, units::Symbol=:rad)
+function rot_any(θ::Real, axis::Symbol, units::Symbol=:rad)
+    check_argument_axis(axis)
+
     θ = convert_angle(θ, units)
 
     cos_θ = cos(θ)
     sin_θ = sin(θ)
 
-    if axis == 'x'
+    if axis == :x
         return [1 0 0;
                 0 cos_θ -sin_θ;
                 0 sin_θ cos_θ]
-    elseif axis == 'y'
+    elseif axis == :y
         return [cos_θ 0 sin_θ;
                 0 1 0;
                 -sin_θ 0 cos_θ]
-    elseif axis == 'z'
+    else
         return [cos_θ -sin_θ 0;
                 sin_θ cos_θ 0;
                 0 0 1]
-    else
-        error("Expected one of ('x', 'y', 'z') for argument axis, got $axis.")
     end
 end
 
@@ -106,7 +111,7 @@ Generate 3 x 3 rotation matrix representing a rotation of `θ` about the x-axis.
 
 Interpret `θ` in radians unless `units` is `:deg`.
 """
-rotx(θ::Real, units::Symbol=:rad) = rot_any(θ, 'x', units)
+rotx(θ::Real, units::Symbol=:rad) = rot_any(θ, :x, units)
 
 """
     roty(θ, [units])
@@ -115,7 +120,7 @@ Generate 3 x 3 rotation matrix representing a rotation of `θ` about the y-axis.
 
 Interpret `θ` in radians unless `units` is `:deg`.
 """
-roty(θ::Real, units::Symbol=:rad) = rot_any(θ, 'y', units)
+roty(θ::Real, units::Symbol=:rad) = rot_any(θ, :y, units)
 
 """
     rotz(θ, [units])
@@ -124,7 +129,7 @@ Generate 3 x 3 rotation matrix representing a rotation of `θ` about the z-axis.
 
 Interpret `θ` in radians unless `units` is `:deg`.
 """
-rotz(θ::Real, units::Symbol=:rad) = rot_any(θ, 'z', units)
+rotz(θ::Real, units::Symbol=:rad) = rot_any(θ, :z, units)
 
 
 # Homogeneous transform generation
@@ -149,9 +154,7 @@ function r2t(rot_mat::Union{RealMatrix,RealMatrix3D})
         return cat(3, [r2t(rot_mat[:, :, i]) for i in 1:size(rot_mat, 3)]...)
     end
 
-    if !(size(rot_mat) in ((2, 2), (3, 3)))
-        error("Expected array of size (2, 2) or (3, 3), instead had size $(size(rot_mat)).")
-    end
+    @assert (size(rot_mat) in ((2, 2), (3, 3))) "Expected array of size (2, 2) or (3, 3), instead had size $(size(rot_mat))."
 
     is_2d = size(rot_mat) == (2, 2)
     if is_2d
@@ -180,9 +183,7 @@ function t2r(trans_mat::Union{RealMatrix, RealMatrix3D})
         return cat(3, [t2r(trans_mat[:, :, i]) for i in 1:size(trans_mat, 3)]...)
     end
 
-    if !(size(trans_mat) in ((3, 3), (4, 4)))
-        error("Expected array of size (3, 3) or (4, 4), instead had size $(size(rot_mat)).")
-    end
+    @assert (size(trans_mat) in ((3, 3), (4, 4))) "Expected array of size (3, 3) or (4, 4), instead had size $(size(trans_mat))."
 
     return trans_mat[1:end - 1, 1:end - 1]
 end
@@ -207,16 +208,17 @@ The translational component is zero.
 
 Interpret `θ` in radians unless `units` is `:deg`.
 """
-function trot_any(θ::Real, axis::Char, units::Symbol=:rad)
-    rot_func = if axis == 'x'
+function trot_any(θ::Real, axis::Symbol, units::Symbol=:rad)
+    check_argument_axis(axis)
+
+    rot_func = if axis == :x
                    rotx
-               elseif axis == 'y'
+               elseif axis == :y
                    roty
-               elseif axis == 'z'
-                   rotz
                else
-                   error("Expected one of ('x', 'y', 'z') for axis, got $axis.")
+                   rotz
                end
+
     return r2t(rot_func(θ, units))
 end
 
@@ -229,7 +231,7 @@ The translational component is zero.
 
 Interpret `θ` in radians unless `units` is `:deg`.
 """
-trotx(θ::Real, units::Symbol=:rad) = trot_any(θ, 'x', units)
+trotx(θ::Real, units::Symbol=:rad) = trot_any(θ, :x, units)
 
 """
     troty(θ, [units])
@@ -240,7 +242,7 @@ The translational component is zero.
 
 Interpret `θ` in radians unless `units` is `:deg`.
 """
-troty(θ::Real, units::Symbol=:rad) = trot_any(θ, 'y', units)
+troty(θ::Real, units::Symbol=:rad) = trot_any(θ, :y, units)
 
 """
     trotz(θ, [units])
@@ -251,7 +253,7 @@ The translational component is zero.
 
 Interpret `θ` in radians unless `units` is `:deg`.
 """
-trotz(θ::Real, units::Symbol=:rad) = trot_any(θ, 'z', units)
+trotz(θ::Real, units::Symbol=:rad) = trot_any(θ, :z, units)
 
 """
     se2(x, y, [θ, [units]])
@@ -283,9 +285,7 @@ Return a 4 x 4 homogeneous transform that represents the same x, y translation a
 z rotation as does `trans_mat` (3 x 3).
 """
 function se3(trans_mat::RealMatrix)
-    if size(trans_mat) != (3, 3)
-        error("Expected array of size (3, 3), instead had size $(size(trans_mat)).")
-    end
+    @assert (size(trans_mat) == (3, 3)) "Expected array of size (3, 3), instead had size $(size(trans_mat))."
 
     return [trans_mat[1:2, 1:2] [0; 0] trans_mat[1:2, 3];
             0 0 1 0;
@@ -380,9 +380,7 @@ function tr2rpy(mat::Union{RealMatrix, RealMatrix3D}, units::Symbol=:rad, axis_o
         return cat(3, [tr2rpy(mat[:, :, i]) for i in 1:size(mat, 3)]...)
     end
 
-    if !(size(mat) in ((3, 3), (4, 4)))
-        error("Expected array of size (3, 3) or (4, 4), instead had size $(size(mat)).")
-    end
+    @assert (size(mat) in ((3, 3), (4, 4))) "Expected array of size (3, 3) or (4, 4), instead had size $(size(mat))."
 
     if axis_order == :xyz
         singularity_present = all([abs(elem) < eps() for elem in [mat[2, 3] mat[3, 3]]])
