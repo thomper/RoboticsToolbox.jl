@@ -6,9 +6,9 @@ export se2, se3
 export r2t, t2r
 export rpy2r, rpy2t, rpy2jac, tr2rpy
 
-typealias RealArray{T <: Real} Array{T,1}
-typealias RealMatrix{T <: Real} Matrix{T}
-typealias RealMatrix3D{T <: Real} Array{T,3}
+RealArray{T <: Real} = Array{T,1}
+RealMatrix{T <: Real} = Matrix{T}
+RealMatrix3D{T <: Real} = Array{T,3}
 
 
 """
@@ -47,7 +47,7 @@ function convert_angle(θ::Union{Real, RealArray}, units::Symbol)
     check_argument_units(units)
 
     if units == :deg
-            θ = deg2rad(θ)
+            θ = deg2rad.(θ)
     end
 
     return θ

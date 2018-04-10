@@ -1,6 +1,6 @@
 Port of Peter Corke's Robotics Toolbox to Julia.
 
-This is just a test.
+This work is unfinished.
 
 These functions have been ported:
 
@@ -18,7 +18,7 @@ Tentatively licensed under the GPLv3.
 
 Requirements
 ------------
-Julia 0.5.0+.
+Julia 0.6.2.
 
 Documenter.jl if you wish to generate documentation.
 
