@@ -365,7 +365,7 @@ Generate roll-pitch-yaw angles from homogeneous transform or rotation matrix.
 If `mat` is a sequence then a sequence of roll-pitch-yaw angles is returned.
 
 There is a singularity for the case where pitch = π / 2 in which case roll is
-aribtrarily set to zero and yaw is the sum (roll + yaw).
+arbitrarily set to zero and yaw is the sum (roll + yaw).
 
 Note that textbooks (Paul, Spong) use the rotation order zyx.
 
